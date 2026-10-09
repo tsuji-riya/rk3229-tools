@@ -1,0 +1,8 @@
+#!/bin/sh
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin
+date +%s > /etc/rk3229/timestamp
+ifdown -a 2>/dev/null
+killall5 -15; sleep 1; killall5 -9
+sync
+umount -a -r 2>/dev/null
+mount -o remount,ro / 2>/dev/null

@@ -1,0 +1,3 @@
+# <fs>                 <mountpoint> <type> <opts>          <dump> <pass>
+LABEL=alpine-root      /            ext4   rw,noatime       0 1
+LABEL=RK3229BOOT       /boot        vfat   rw,noatime       0 2

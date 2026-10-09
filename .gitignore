@@ -1,0 +1,7 @@
+# build outputs and local inputs (not for git)
+/out/
+/trust.img
+*.img
+*.img.xz
+!/loader/*.img
+.DS_Store

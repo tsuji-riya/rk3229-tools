@@ -1,0 +1,11 @@
+
+  Alpine Linux on RK3229 (MX10 TV box) -- booted from USB via U-Boot
+
+  Serial console : UART2, 1500000 8N1
+  Boot partition : /boot (FAT32, LABEL=RK3229BOOT) -> extlinux/extlinux.conf
+  Packages       : apk add <pkg>   (needs Ethernet; clock is set via NTP)
+                   e.g.  apk add openrc openssh e2fsprogs-extra
+  More info      : /etc/rk3229/README
+
+  Default login is root / alpine -- change it now with 'passwd'.
+

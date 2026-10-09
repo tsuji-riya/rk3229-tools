@@ -1,0 +1,20 @@
+Alpine Linux 3.24 (armv7) on RK3229 / MX10 -- notes
+===================================================
+
+Boot chain
+  BootROM -> idblock (DDR init + miniloader, in eMMC) -> uboot partition
+  (mainline U-Boot, eMMC) -> USB stick: /extlinux/extlinux.conf on p1
+  -> zImage + rk3229-mx10.dtb -> root=PARTUUID=52334b32-02 (p2, ext4).
+
+This rootfs is the stock Alpine "minirootfs" plus a small BusyBox-init setup
+(/etc/inittab, /etc/rk3229/rc.sysinit).  OpenRC is not installed:
+
+  apk update
+  apk add openrc openssh e2fsprogs-extra     # optional
+
+Growing the root filesystem to the whole stick (from a PC is easiest):
+  growpart /dev/sdX 2 && e2fsck -f /dev/sdX2 && resize2fs /dev/sdX2
+
+Update U-Boot in eMMC from Linux (DANGEROUS -- keep the maskrom recovery
+procedure at hand):
+  dd if=/boot/rk3229/uboot.img of=/dev/mmcblk2 bs=512 seek=8192 conv=fsync

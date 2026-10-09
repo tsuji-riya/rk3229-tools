@@ -1,0 +1,49 @@
+#!/bin/sh
+# Minimal system bring-up for the BusyBox-init based Alpine rootfs.
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+# The kernel already mounts devtmpfs on /dev (CONFIG_DEVTMPFS_MOUNT).
+mountpoint -q /dev || mount -t devtmpfs devtmpfs /dev
+mkdir -p /dev/pts /dev/shm
+mount -t devpts -o gid=5,mode=0620 devpts /dev/pts
+mount -t tmpfs -o mode=1777,nosuid,nodev tmpfs /dev/shm
+mount -t tmpfs -o mode=0755,nosuid,nodev tmpfs /run
+mount -t tmpfs -o mode=1777,nosuid,nodev tmpfs /tmp
+mkdir -p /run/lock
+[ -d /sys/fs/cgroup ] && mount -t cgroup2 none /sys/fs/cgroup 2>/dev/null
+
+# Root is mounted read-write via the kernel command line; make sure of it.
+mount -o remount,rw / 2>/dev/null
+mount -a 2>/dev/null          # /boot
+
+# No RTC on this board: start from the last saved time, NTP fixes it later.
+TS=/etc/rk3229/timestamp
+if [ -r "$TS" ]; then
+	saved=$(cat "$TS")
+	[ "$(date +%s)" -lt "$saved" ] && date -s "@$saved" >/dev/null
+fi
+
+hostname -F /etc/hostname
+sysctl -q -p /etc/sysctl.conf 2>/dev/null
+echo "" > /dev/mdev.seq 2>/dev/null
+mdev -d 2>/dev/null &
+
+# Static modules, then everything the hardware asks for (background, best effort).
+grep -v '^#' /etc/modules | while read -r m; do [ -n "$m" ] && modprobe "$m"; done
+(
+	find /sys/devices -name modalias -type f 2>/dev/null | xargs cat 2>/dev/null |
+		sort -u | xargs modprobe -ab 2>/dev/null
+) &
+
+# Networking and clock sync in the background so login is never delayed.
+(
+	ifup -a >/run/ifup.log 2>&1
+	n=0
+	while [ $n -lt 12 ]; do
+		ntpd -n -q -p pool.ntp.org >/dev/null 2>&1 && break
+		n=$((n + 1)); sleep 10
+	done
+	date +%s > "$TS"
+) &

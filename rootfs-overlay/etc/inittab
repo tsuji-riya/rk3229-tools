@@ -1,0 +1,11 @@
+# /etc/inittab -- BusyBox init (the Alpine minirootfs ships without OpenRC)
+#
+# Serial console: UART2 @ 1.5 Mbaud (same port U-Boot and the kernel use).
+::sysinit:/etc/rk3229/rc.sysinit
+
+ttyS2::respawn:/sbin/getty -L 1500000 ttyS2 vt100
+# HDMI console (needs a working display + a USB keyboard)
+tty1::respawn:/sbin/getty 38400 tty1
+
+::ctrlaltdel:/sbin/reboot
+::shutdown:/etc/rk3229/rc.shutdown
